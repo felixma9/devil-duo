@@ -2,7 +2,32 @@
 -- local_variables_like_so
 -- CONSTANTS_LIKE_SO
 
+local function init_deck()
+    -- Clear out deck if needed
+    for k, v in pairs(Deck) do Deck[k] = nil end
+
+    -- Add value cards to deck
+    for card_value = 1, Num_Cards_In_Stack do
+        for i = 1, card_value do
+            table.insert(Deck, {
+                value = card_value,
+            })
+        end
+    end
+
+    -- Add other cards to deck
+
+    -- Shuffle deck
+    for i = #Deck, 2, -1 do
+        local j = love.math.random(1, i)
+        Deck[i], Deck[j] = Deck[j], Deck[i]
+    end
+end
+
+
 function love.load()
+    love.math.setRandomSeed(love.timer.getTime() * 1000)
+
     -- Virtual resolution
     VIRTUAL_WIDTH = 375
     VIRTUAL_HEIGHT = 667
@@ -76,6 +101,14 @@ function love.load()
     -- Hands
     Left_Hand = {}
     Right_Hand = {}
+
+    -- Deck
+    Deck = {}
+    init_deck()
+
+    for i = 1, #Deck do
+        print("Deck card " .. i .. ": value " .. Deck[i].value)
+    end
 end
 
 function love.update(dt)
@@ -131,6 +164,8 @@ local function draw_layout_guides()
                                 Card_Width,
                                 Card_Height
         )
+        love.graphics.setColor(0, 0, 0)
+        love.graphics.print(card.value .. " * " .. i, Card_Stack_Left_BL.x + Card_Width / 3, y_left + Card_Height - 20)
     end
 
     -- Draw right hand
@@ -148,6 +183,8 @@ local function draw_layout_guides()
                                 Card_Width,
                                 Card_Height
         )
+        love.graphics.setColor(0, 0, 0)
+        love.graphics.print(card.value .. " * " .. i, Card_Stack_Right_BL.x + Card_Width / 2, y_left + Card_Height - 20)
     end
 end
 
@@ -170,9 +207,10 @@ end
 
 local function draw_to_left_hand()
     if #Left_Hand < Num_Cards_In_Stack then
-        table.insert(Left_Hand, {
-            value = 0,
-        })
+        local top_card = table.remove(Deck)
+        if top_card then
+            table.insert(Left_Hand, top_card)
+        end
     else
         print("Left hand is full!")
         for k, v in pairs(Left_Hand) do Left_Hand[k] = nil end
@@ -181,9 +219,10 @@ end
 
 local function draw_to_right_hand()
     if #Right_Hand < Num_Cards_In_Stack then
-        table.insert(Right_Hand, {
-            value = 0,
-        })
+        local top_card = table.remove(Deck)
+        if top_card then
+            table.insert(Right_Hand, top_card)
+        end
     else
         print("Right hand is full!")
         for k, v in pairs(Right_Hand) do Right_Hand[k] = nil end
