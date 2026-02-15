@@ -95,8 +95,11 @@ function love.load()
             y = Card_Stack_Right_TL.y,
             width = Card_Width,
             height = Card_Area_Height
-        }
+        },
     }
+
+    -- Score
+    Score = 0
 
     -- Hands
     Left_Hand = {}
@@ -106,9 +109,10 @@ function love.load()
     Deck = {}
     init_deck()
 
-    for i = 1, #Deck do
-        print("Deck card " .. i .. ": value " .. Deck[i].value)
-    end
+    -- Duplicate management
+    -- Length of these is either 0 or 2, 0 == no duplicate, 2 == duplicate
+    Left_Hand_Duplicate_Indices = {}
+    Right_Hand_Duplicate_Indices = {}
 end
 
 function love.update(dt)
@@ -188,6 +192,27 @@ local function draw_layout_guides()
     end
 end
 
+local function draw_info_boxes()
+    love.graphics.push()
+
+    -- Draw points box
+    local left_box_TL = {
+        x = Screen_X_Padding + Info_Area_Padding,
+        y = Screen_Y_Padding + Info_Area_Padding
+    }
+    love.graphics.setColor(0.8, 0.8, 0.8)
+    love.graphics.rectangle("fill",
+                            Screen_X_Padding + Info_Area_Padding,
+                            Screen_Y_Padding + Info_Area_Padding,
+                            (VIRTUAL_WIDTH / 2) - (Screen_X_Padding + Info_Area_Padding),
+                            Info_Height - (2 * Info_Area_Padding)
+    )
+    love.graphics.setColor(0, 0, 0)
+    love.graphics.print("Points: " .. Score, left_box_TL.x + 10, left_box_TL.y + 10)
+
+    love.graphics.pop()
+end
+
 function love.draw()
     -- Apply scaling transformation
     love.graphics.push()
@@ -203,14 +228,35 @@ function love.draw()
 
     -- Draw zones on screen
     draw_layout_guides()
+
+    -- Draw info boxes
+    draw_info_boxes()
 end
 
 local function draw_to_left_hand()
+    if #Left_Hand_Duplicate_Indices > 0 then
+        print("Left hand has duplicate! Cards at indices " .. Left_Hand_Duplicate_Indices[1] .. " and " .. Left_Hand_Duplicate_Indices[2] .. " are duplicates. Clearing hand.")
+        for k, v in pairs(Left_Hand) do Left_Hand[k] = nil end
+        Left_Hand_Duplicate_Indices = {}
+        return
+    end
+
     if #Left_Hand < Num_Cards_In_Stack then
+        -- Draw top card
         local top_card = table.remove(Deck)
         if top_card then
             table.insert(Left_Hand, top_card)
         end
+
+        for i = 1, #Left_Hand - 1 do
+            if Left_Hand[i].value == Left_Hand[#Left_Hand].value then
+                Left_Hand_Duplicate_Indices = {i, #Left_Hand}
+                break
+            end
+        end
+
+        -- -- Update score
+        -- Score = Score + (Left_Hand[#Left_Hand].value * #Left_Hand)
     else
         print("Left hand is full!")
         for k, v in pairs(Left_Hand) do Left_Hand[k] = nil end
@@ -218,11 +264,29 @@ local function draw_to_left_hand()
 end
 
 local function draw_to_right_hand()
+    if #Right_Hand_Duplicate_Indices > 0 then
+        print("Right hand has duplicate! Cards at indices " .. Right_Hand_Duplicate_Indices[1] .. " and " .. Right_Hand_Duplicate_Indices[2] .. " are duplicates. Clearing hand.")
+        for k, v in pairs(Right_Hand) do Right_Hand[k] = nil end
+        Right_Hand_Duplicate_Indices = {}
+        return
+    end
+
     if #Right_Hand < Num_Cards_In_Stack then
+        -- Draw top card
         local top_card = table.remove(Deck)
         if top_card then
             table.insert(Right_Hand, top_card)
         end
+
+        for i = 1, #Right_Hand - 1 do
+            if Right_Hand[i].value == Right_Hand[#Right_Hand].value then
+                Right_Hand_Duplicate_Indices = {i, #Right_Hand}
+                break
+            end
+        end
+
+        -- -- Update score
+        -- Score = Score + (Right_Hand[#Right_Hand].value * #Right_Hand)
     else
         print("Right hand is full!")
         for k, v in pairs(Right_Hand) do Right_Hand[k] = nil end
