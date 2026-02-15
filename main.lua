@@ -21,7 +21,6 @@ function love.load()
     Offset_Y = (window_height - (VIRTUAL_HEIGHT * Scale)) / 2
 
     -- Cards
-    Cards = {}
     Card_Width = 90
     Card_Height = 140
 
@@ -48,7 +47,7 @@ function love.load()
         y = Screen_Y_Padding + Info_Height + Card_Area_Padding
     }
 
-    Num_Cards_In_Stack = 7
+    Num_Cards_In_Stack = 5
     Card_Stack_Left_BL = {
         x = Card_Stack_Left_TL.x,
         y = Card_Stack_Left_TL.y + Card_Area_Height
@@ -117,15 +116,14 @@ local function draw_layout_guides()
                             Card_Area_Height
     )
 
-    -- Draw card levels
-    for i = 1, Num_Cards_In_Stack do
+    -- Draw left hand
+    for i, card in ipairs(Left_Hand) do
         local hue = i / Num_Cards_In_Stack  -- 0 to 1
         love.graphics.setColor(
             0.5 + 0.5 * math.sin(hue * math.pi * 2),
             0.5 + 0.5 * math.sin((hue + 0.33) * math.pi * 2),
             0.5 + 0.5 * math.sin((hue + 0.67) * math.pi * 2)
         )
-
         local y_left = Card_Stack_Left_BL.y - Card_Height - ((i - 1) * ((Card_Area_Height - Card_Height) / (Num_Cards_In_Stack - 1)))
         love.graphics.rectangle("fill",
                                 Card_Stack_Left_TL.x,
@@ -133,11 +131,20 @@ local function draw_layout_guides()
                                 Card_Width,
                                 Card_Height
         )
+    end
 
-        local y_right = Card_Stack_Right_BL.y - Card_Height - ((i - 1) * ((Card_Area_Height - Card_Height) / (Num_Cards_In_Stack - 1)))
+    -- Draw right hand
+    for i, card in ipairs(Right_Hand) do
+        local hue = i / Num_Cards_In_Stack  -- 0 to 1
+        love.graphics.setColor(
+            0.5 + 0.5 * math.sin(hue * math.pi * 2),
+            0.5 + 0.5 * math.sin((hue + 0.33) * math.pi * 2),
+            0.5 + 0.5 * math.sin((hue + 0.67) * math.pi * 2)
+        )
+        local y_left = Card_Stack_Right_BL.y - Card_Height - ((i - 1) * ((Card_Area_Height - Card_Height) / (Num_Cards_In_Stack - 1)))
         love.graphics.rectangle("fill",
                                 Card_Stack_Right_TL.x,
-                                y_right,
+                                y_left,
                                 Card_Width,
                                 Card_Height
         )
@@ -154,12 +161,6 @@ function love.draw()
     love.graphics.clear(0.1, 0.2, 0.3)          -- fill screen with color
     love.graphics.setColor(1, 1, 1)
 
-    -- Draw cards
-    love.graphics.setColor(1, 1, 1)
-    for i, card in ipairs(Cards) do
-        love.graphics.rectangle("fill", card.x, card.y, Card_Width, Card_Height)
-    end
-
     -- Stop scaling
     love.graphics.pop()
 
@@ -167,18 +168,33 @@ function love.draw()
     draw_layout_guides()
 end
 
+local function draw_to_left_hand()
+    if #Left_Hand < Num_Cards_In_Stack then
+        table.insert(Left_Hand, {
+            value = 0,
+        })
+    else
+        print("Left hand is full!")
+        for k, v in pairs(Left_Hand) do Left_Hand[k] = nil end
+    end
+end
+
+local function draw_to_right_hand()
+    if #Right_Hand < Num_Cards_In_Stack then
+        table.insert(Right_Hand, {
+            value = 0,
+        })
+    else
+        print("Right hand is full!")
+        for k, v in pairs(Right_Hand) do Right_Hand[k] = nil end
+    end
+end
+
+
 function love.touchpressed(id, x, y)
     -- Convert to virtual coordinates
     local virtual_x = (x - Offset_X) / Scale
     local virtual_y = (y - Offset_Y) / Scale
-
-    -- -- Add new card at touch position
-    -- local newCard = {
-    --     x = virtual_x - Card_Width / 2,
-    --     y = virtual_y - Card_Height / 2
-    -- }
-
-    -- table.insert(Cards, newCard)
 
     local function is_point_in_rect(point_x, point_y, rect)
         return point_x >= rect.x and point_x <= rect.x + rect.width and
@@ -187,8 +203,10 @@ function love.touchpressed(id, x, y)
 
     if is_point_in_rect(virtual_x, virtual_y, Buttons.left_stack) then
         print("Left draw pile clicked")
+        draw_to_left_hand()
     elseif is_point_in_rect(virtual_x, virtual_y, Buttons.right_stack) then
         print("Right draw pile clicked")
+        draw_to_right_hand()
     end
 end
 
