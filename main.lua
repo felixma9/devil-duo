@@ -113,9 +113,27 @@ function love.load()
     -- Length of these is either 0 or 2, 0 == no duplicate, 2 == duplicate
     Left_Hand_Duplicate_Indices = {}
     Right_Hand_Duplicate_Indices = {}
+
+    -- Detect swipes
+    Active_Touches = {}
+    Swipe_Threshold = 50
+    Swipe_Time_Limit = 0.5
+    Hold_Duration = 0.5
+    Tap_Max_Distance = 10
+    Tap_Max_Duration = 0.3
 end
 
 function love.update(dt)
+    -- Check for hold
+    for id, touch in pairs(Active_Touches) do
+        if not touch.hold_triggered then
+            local hold_time = love.timer.getTime() - touch.start_time
+            if hold_time >= Hold_Duration then
+                print("Hold detected at " .. touch.start_x .. ", " .. touch.start_y)
+                touch.hold_triggered = true
+            end
+        end
+    end
 end
 
 local function draw_layout_guides()
@@ -254,9 +272,6 @@ local function draw_to_left_hand()
                 break
             end
         end
-
-        -- -- Update score
-        -- Score = Score + (Left_Hand[#Left_Hand].value * #Left_Hand)
     else
         print("Left hand is full!")
         for k, v in pairs(Left_Hand) do Left_Hand[k] = nil end
@@ -284,37 +299,84 @@ local function draw_to_right_hand()
                 break
             end
         end
-
-        -- -- Update score
-        -- Score = Score + (Right_Hand[#Right_Hand].value * #Right_Hand)
     else
         print("Right hand is full!")
         for k, v in pairs(Right_Hand) do Right_Hand[k] = nil end
     end
 end
 
-
 function love.touchpressed(id, x, y)
+    -- Ignore if already tracking this touch
+    if Active_Touches[id] then return end
+
     -- Convert to virtual coordinates
     local virtual_x = (x - Offset_X) / Scale
     local virtual_y = (y - Offset_Y) / Scale
+
+    -- Store touch
+    Active_Touches[id] = {
+        start_x = virtual_x,
+        start_y = virtual_y,
+        start_time = love.timer.getTime(),
+        hold_triggered = false
+    }
+    print("Stored touch at " .. virtual_x .. ", " .. virtual_y)
+end
+
+function love.touchreleased(id, x, y)
+    local touch = Active_Touches[id]
+    if not touch then return end
+
+    -- Remove tap so we don't trigger false positive hold
+    Active_Touches[id] = nil
+
+    local virtual_x = (x - Offset_X) / Scale
+    local virtual_y = (y - Offset_Y) / Scale
+
+    local dx = virtual_x - touch.start_x
+    local dy = virtual_y - touch.start_y
+    local duration = love.timer.getTime() - touch.start_time
+    local distance = math.sqrt(dx * dx + dy * dy)
 
     local function is_point_in_rect(point_x, point_y, rect)
         return point_x >= rect.x and point_x <= rect.x + rect.width and
                point_y >= rect.y and point_y <= rect.y + rect.height
     end
 
-    if is_point_in_rect(virtual_x, virtual_y, Buttons.left_stack) then
-        print("Left draw pile clicked")
-        draw_to_left_hand()
-    elseif is_point_in_rect(virtual_x, virtual_y, Buttons.right_stack) then
-        print("Right draw pile clicked")
-        draw_to_right_hand()
+    -- If hold triggered, don't process tap or swipe
+    if touch.hold_triggered then
+        Active_Touches[id] = nil
+        return
+    end
+
+    -- Check for swipe up
+    if distance > Swipe_Threshold and dy < -Swipe_Threshold and duration < Swipe_Time_Limit then
+        if is_point_in_rect(touch.start_x, touch.start_y, Buttons.left_stack) then
+            print("Swipe up on left stack")
+        elseif is_point_in_rect(touch.start_x, touch.start_y, Buttons.right_stack) then
+            print("Swipe up on right stack")
+        end
+        
+    -- Check for tap
+    elseif distance < Tap_Max_Distance and duration < Tap_Max_Duration then
+        if is_point_in_rect(virtual_x, virtual_y, Buttons.left_stack) then
+            print("Left draw pile tapped")
+            draw_to_left_hand()
+        elseif is_point_in_rect(virtual_x, virtual_y, Buttons.right_stack) then
+            print("Right draw pile tapped")
+            draw_to_right_hand()
+        end
     end
 end
 
 function love.mousepressed(x, y, button)
     if button == 1 then
-        love.touchpressed("id", x, y)
+        love.touchpressed("mouse", x, y)
+    end
+end
+
+function love.mousereleased(x, y, button)
+    if button == 1 then
+        love.touchreleased("mouse", x, y)
     end
 end
