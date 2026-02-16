@@ -7,7 +7,7 @@ local function init_deck()
     for k, v in pairs(Deck) do Deck[k] = nil end
 
     -- Add value cards to deck
-    for card_value = 1, Num_Cards_In_Stack do
+    for card_value = 1, NUM_CARDS_IN_STACK do
         for i = 1, card_value do
             table.insert(Deck, {
                 value = card_value,
@@ -46,33 +46,33 @@ function love.load()
     Offset_Y = (window_height - (VIRTUAL_HEIGHT * Scale)) / 2
 
     -- Cards
-    Card_Width = 90
-    Card_Height = 140
+    CARD_WIDTH = 90
+    CARD_HEIGHT = 140
 
     -- Padding around entire app
-    Screen_X_Padding = 30
-    Screen_Y_Padding = 40
+    SCREEN_X_PADDING = 30
+    SCREEN_Y_PADDING = 40
 
     -- Top info area
-    Info_Height = 150
-    Info_Area_Padding = 20
+    INFO_HEIGHT = 150
+    INFO_AREA_PADDING = 20
 
     -- Card area
-    Card_Area_Padding = 20
-    Card_Area_Height = VIRTUAL_HEIGHT - Info_Height - (2 * Card_Area_Padding) - (2 * Screen_Y_Padding)
-    Card_Area_Width = VIRTUAL_WIDTH - (2 * (Screen_X_Padding + Card_Area_Padding))
+    CARD_AREA_PADDING = 20
+    Card_Area_Height = VIRTUAL_HEIGHT - INFO_HEIGHT - (2 * CARD_AREA_PADDING) - (2 * SCREEN_Y_PADDING)
+    Card_Area_Width = VIRTUAL_WIDTH - (2 * (SCREEN_X_PADDING + CARD_AREA_PADDING))
 
     -- Card stack positioning
     Card_Stack_Left_TL = {
-        x = Screen_X_Padding + Card_Area_Padding,
-        y = Screen_Y_Padding + Info_Height + Card_Area_Padding
+        x = SCREEN_X_PADDING + CARD_AREA_PADDING,
+        y = SCREEN_Y_PADDING + INFO_HEIGHT + CARD_AREA_PADDING
     }
     Card_Stack_Right_TL = {
-        x = Card_Stack_Left_TL.x + Card_Area_Width - Card_Width,
-        y = Screen_Y_Padding + Info_Height + Card_Area_Padding
+        x = Card_Stack_Left_TL.x + Card_Area_Width - CARD_WIDTH,
+        y = SCREEN_Y_PADDING + INFO_HEIGHT + CARD_AREA_PADDING
     }
 
-    Num_Cards_In_Stack = 5
+    NUM_CARDS_IN_STACK = 5
     Card_Stack_Left_BL = {
         x = Card_Stack_Left_TL.x,
         y = Card_Stack_Left_TL.y + Card_Area_Height
@@ -87,13 +87,13 @@ function love.load()
         left_stack = {
             x = Card_Stack_Left_TL.x,
             y = Card_Stack_Left_TL.y,
-            width = Card_Width,
+            width = CARD_WIDTH,
             height = Card_Area_Height
         },
         right_stack = {
             x = Card_Stack_Right_TL.x,
             y = Card_Stack_Right_TL.y,
-            width = Card_Width,
+            width = CARD_WIDTH,
             height = Card_Area_Height
         },
     }
@@ -102,6 +102,8 @@ function love.load()
     Score = 0
 
     -- Hands
+    NUM_HANDS_SUBMITTABLE = 3
+    Hands_Submitted = 0
     Left_Hand = {}
     Right_Hand = {}
 
@@ -116,11 +118,11 @@ function love.load()
 
     -- Detect swipes
     Active_Touches = {}
-    Swipe_Threshold = 50
-    Swipe_Time_Limit = 0.5
-    Hold_Duration = 0.5
-    Tap_Max_Distance = 10
-    Tap_Max_Duration = 0.3
+    SWIPE_THRESHOLD = 50
+    SWIPE_TIME_LIMIT = 0.5
+    HOLD_DURATION = 0.5
+    TAP_MAX_DISTANCE = 10
+    TAP_MAX_DURATION = 0.3
 end
 
 function love.update(dt)
@@ -128,7 +130,7 @@ function love.update(dt)
     for id, touch in pairs(Active_Touches) do
         if not touch.hold_triggered then
             local hold_time = love.timer.getTime() - touch.start_time
-            if hold_time >= Hold_Duration then
+            if hold_time >= HOLD_DURATION then
                 print("Hold detected at " .. touch.start_x .. ", " .. touch.start_y)
                 touch.hold_triggered = true
             end
@@ -141,72 +143,72 @@ local function draw_layout_guides()
 
     -- Draw boundary all around
     love.graphics.rectangle("line",
-                            Screen_X_Padding,
-                            Screen_Y_Padding,
-                            VIRTUAL_WIDTH - (2 * Screen_X_Padding),
-                            VIRTUAL_HEIGHT - (2 * Screen_Y_Padding)
+                            SCREEN_X_PADDING,
+                            SCREEN_Y_PADDING,
+                            VIRTUAL_WIDTH - (2 * SCREEN_X_PADDING),
+                            VIRTUAL_HEIGHT - (2 * SCREEN_Y_PADDING)
     )
 
     -- Draw top info area
     love.graphics.rectangle("line",
-                            Screen_X_Padding,
-                            Screen_Y_Padding,
-                            VIRTUAL_WIDTH - (2 * Screen_X_Padding),
-                            Info_Height
+                            SCREEN_X_PADDING,
+                            SCREEN_Y_PADDING,
+                            VIRTUAL_WIDTH - (2 * SCREEN_X_PADDING),
+                            INFO_HEIGHT
     )
 
     -- Draw top info box
     love.graphics.rectangle("line",
-                            Screen_X_Padding + Info_Area_Padding,
-                            Screen_Y_Padding + Info_Area_Padding,
-                            VIRTUAL_WIDTH - (2 * (Screen_X_Padding + Info_Area_Padding)),
-                            Info_Height - (2 * Info_Area_Padding)
+                            SCREEN_X_PADDING + INFO_AREA_PADDING,
+                            SCREEN_Y_PADDING + INFO_AREA_PADDING,
+                            VIRTUAL_WIDTH - (2 * (SCREEN_X_PADDING + INFO_AREA_PADDING)),
+                            INFO_HEIGHT - (2 * INFO_AREA_PADDING)
     )
 
     -- Draw card box
     love.graphics.rectangle("line",
-                            Screen_X_Padding + Card_Area_Padding,
-                            Screen_Y_Padding + Info_Height + Card_Area_Padding,
+                            SCREEN_X_PADDING + CARD_AREA_PADDING,
+                            SCREEN_Y_PADDING + INFO_HEIGHT + CARD_AREA_PADDING,
                             Card_Area_Width,
                             Card_Area_Height
     )
 
     -- Draw left hand
     for i, card in ipairs(Left_Hand) do
-        local hue = i / Num_Cards_In_Stack  -- 0 to 1
+        local hue = i / NUM_CARDS_IN_STACK  -- 0 to 1
         love.graphics.setColor(
             0.5 + 0.5 * math.sin(hue * math.pi * 2),
             0.5 + 0.5 * math.sin((hue + 0.33) * math.pi * 2),
             0.5 + 0.5 * math.sin((hue + 0.67) * math.pi * 2)
         )
-        local y_left = Card_Stack_Left_BL.y - Card_Height - ((i - 1) * ((Card_Area_Height - Card_Height) / (Num_Cards_In_Stack - 1)))
+        local y_left = Card_Stack_Left_BL.y - CARD_HEIGHT - ((i - 1) * ((Card_Area_Height - CARD_HEIGHT) / (NUM_CARDS_IN_STACK - 1)))
         love.graphics.rectangle("fill",
                                 Card_Stack_Left_TL.x,
                                 y_left,
-                                Card_Width,
-                                Card_Height
+                                CARD_WIDTH,
+                                CARD_HEIGHT
         )
         love.graphics.setColor(0, 0, 0)
-        love.graphics.print(card.value .. " * " .. i, Card_Stack_Left_BL.x + Card_Width / 3, y_left + Card_Height - 20)
+        love.graphics.print(card.value .. " * " .. i, Card_Stack_Left_BL.x + CARD_WIDTH / 3, y_left + CARD_HEIGHT - 20)
     end
 
     -- Draw right hand
     for i, card in ipairs(Right_Hand) do
-        local hue = i / Num_Cards_In_Stack  -- 0 to 1
+        local hue = i / NUM_CARDS_IN_STACK  -- 0 to 1
         love.graphics.setColor(
             0.5 + 0.5 * math.sin(hue * math.pi * 2),
             0.5 + 0.5 * math.sin((hue + 0.33) * math.pi * 2),
             0.5 + 0.5 * math.sin((hue + 0.67) * math.pi * 2)
         )
-        local y_left = Card_Stack_Right_BL.y - Card_Height - ((i - 1) * ((Card_Area_Height - Card_Height) / (Num_Cards_In_Stack - 1)))
+        local y_left = Card_Stack_Right_BL.y - CARD_HEIGHT - ((i - 1) * ((Card_Area_Height - CARD_HEIGHT) / (NUM_CARDS_IN_STACK - 1)))
         love.graphics.rectangle("fill",
                                 Card_Stack_Right_TL.x,
                                 y_left,
-                                Card_Width,
-                                Card_Height
+                                CARD_WIDTH,
+                                CARD_HEIGHT
         )
         love.graphics.setColor(0, 0, 0)
-        love.graphics.print(card.value .. " * " .. i, Card_Stack_Right_BL.x + Card_Width / 2, y_left + Card_Height - 20)
+        love.graphics.print(card.value .. " * " .. i, Card_Stack_Right_BL.x + CARD_WIDTH / 2, y_left + CARD_HEIGHT - 20)
     end
 end
 
@@ -215,15 +217,15 @@ local function draw_info_boxes()
 
     -- Draw points box
     local left_box_TL = {
-        x = Screen_X_Padding + Info_Area_Padding,
-        y = Screen_Y_Padding + Info_Area_Padding
+        x = SCREEN_X_PADDING + INFO_AREA_PADDING,
+        y = SCREEN_Y_PADDING + INFO_AREA_PADDING
     }
     love.graphics.setColor(0.8, 0.8, 0.8)
     love.graphics.rectangle("fill",
-                            Screen_X_Padding + Info_Area_Padding,
-                            Screen_Y_Padding + Info_Area_Padding,
-                            (VIRTUAL_WIDTH / 2) - (Screen_X_Padding + Info_Area_Padding),
-                            Info_Height - (2 * Info_Area_Padding)
+                            SCREEN_X_PADDING + INFO_AREA_PADDING,
+                            SCREEN_Y_PADDING + INFO_AREA_PADDING,
+                            (VIRTUAL_WIDTH / 2) - (SCREEN_X_PADDING + INFO_AREA_PADDING),
+                            INFO_HEIGHT - (2 * INFO_AREA_PADDING)
     )
     love.graphics.setColor(0, 0, 0)
     love.graphics.print("Points: " .. Score, left_box_TL.x + 10, left_box_TL.y + 10)
@@ -263,7 +265,7 @@ local function draw_to_hand(hand, duplicate_indices)
         return
     end
 
-    if #hand < Num_Cards_In_Stack then
+    if #hand < NUM_CARDS_IN_STACK then
         -- Draw top card
         local top_card = table.remove(Deck)
         if top_card then
@@ -285,6 +287,11 @@ local function draw_to_hand(hand, duplicate_indices)
 end
 
 local function submit_hand(hand)
+    if Hands_Submitted >= NUM_HANDS_SUBMITTABLE then
+        print("Already submitted " .. NUM_HANDS_SUBMITTABLE .. " hands, cannot submit more!")
+        return
+    end
+
     if #hand == 0 then
         print("Hand is empty, cannot submit!")
         return
@@ -298,6 +305,8 @@ local function submit_hand(hand)
     Score = Score + hand_score
     print("Submitted hand for " .. hand_score .. " points! Total score: " .. Score)
     clear(hand)
+
+    Hands_Submitted = Hands_Submitted + 1
 end
 
 function love.touchpressed(id, x, y)
@@ -345,7 +354,7 @@ function love.touchreleased(id, x, y)
     end
 
     -- Check for swipe up
-    if distance > Swipe_Threshold and dy < -Swipe_Threshold and duration < Swipe_Time_Limit then
+    if distance > SWIPE_THRESHOLD and dy < -SWIPE_THRESHOLD and duration < SWIPE_TIME_LIMIT then
         if is_point_in_rect(touch.start_x, touch.start_y, Buttons.left_stack) then
             print("Swipe up on left stack")
             submit_hand(Left_Hand)
@@ -355,7 +364,7 @@ function love.touchreleased(id, x, y)
         end
         
     -- Check for tap
-    elseif distance < Tap_Max_Distance and duration < Tap_Max_Duration then
+    elseif distance < TAP_MAX_DISTANCE and duration < TAP_MAX_DURATION then
         if is_point_in_rect(virtual_x, virtual_y, Buttons.left_stack) then
             print("Left draw pile tapped")
             draw_to_hand(Left_Hand, Left_Hand_Duplicate_Indices)
