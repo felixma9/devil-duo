@@ -251,58 +251,53 @@ function love.draw()
     draw_info_boxes()
 end
 
-local function draw_to_left_hand()
-    if #Left_Hand_Duplicate_Indices > 0 then
-        print("Left hand has duplicate! Cards at indices " .. Left_Hand_Duplicate_Indices[1] .. " and " .. Left_Hand_Duplicate_Indices[2] .. " are duplicates. Clearing hand.")
-        for k, v in pairs(Left_Hand) do Left_Hand[k] = nil end
-        Left_Hand_Duplicate_Indices = {}
+local function clear(hand)
+    for k, v in pairs(hand) do hand[k] = nil end
+end
+
+local function draw_to_hand(hand, duplicate_indices)
+    if #duplicate_indices > 0 then
+        print("Hand has duplicate! Cards at indices " .. duplicate_indices[1] .. " and " .. duplicate_indices[2] .. " are duplicates. Clearing hand.")
+        clear(hand)
+        clear(duplicate_indices)
         return
     end
 
-    if #Left_Hand < Num_Cards_In_Stack then
+    if #hand < Num_Cards_In_Stack then
         -- Draw top card
         local top_card = table.remove(Deck)
         if top_card then
-            table.insert(Left_Hand, top_card)
+            table.insert(hand, top_card)
         end
 
-        for i = 1, #Left_Hand - 1 do
-            if Left_Hand[i].value == Left_Hand[#Left_Hand].value then
-                Left_Hand_Duplicate_Indices = {i, #Left_Hand}
+        -- Check for duplicates
+        for i = 1, #hand - 1 do
+            if hand[i].value == hand[#hand].value then
+                duplicate_indices[1] = i
+                duplicate_indices[2] = #hand
                 break
             end
         end
     else
-        print("Left hand is full!")
-        for k, v in pairs(Left_Hand) do Left_Hand[k] = nil end
+        print("Hand is full!")
+        clear(hand)
     end
 end
 
-local function draw_to_right_hand()
-    if #Right_Hand_Duplicate_Indices > 0 then
-        print("Right hand has duplicate! Cards at indices " .. Right_Hand_Duplicate_Indices[1] .. " and " .. Right_Hand_Duplicate_Indices[2] .. " are duplicates. Clearing hand.")
-        for k, v in pairs(Right_Hand) do Right_Hand[k] = nil end
-        Right_Hand_Duplicate_Indices = {}
+local function submit_hand(hand)
+    if #hand == 0 then
+        print("Hand is empty, cannot submit!")
         return
     end
 
-    if #Right_Hand < Num_Cards_In_Stack then
-        -- Draw top card
-        local top_card = table.remove(Deck)
-        if top_card then
-            table.insert(Right_Hand, top_card)
-        end
-
-        for i = 1, #Right_Hand - 1 do
-            if Right_Hand[i].value == Right_Hand[#Right_Hand].value then
-                Right_Hand_Duplicate_Indices = {i, #Right_Hand}
-                break
-            end
-        end
-    else
-        print("Right hand is full!")
-        for k, v in pairs(Right_Hand) do Right_Hand[k] = nil end
+    local hand_score = 0
+    for i, card in ipairs(hand) do
+        hand_score = hand_score + (card.value * i)
     end
+
+    Score = Score + hand_score
+    print("Submitted hand for " .. hand_score .. " points! Total score: " .. Score)
+    clear(hand)
 end
 
 function love.touchpressed(id, x, y)
@@ -353,18 +348,20 @@ function love.touchreleased(id, x, y)
     if distance > Swipe_Threshold and dy < -Swipe_Threshold and duration < Swipe_Time_Limit then
         if is_point_in_rect(touch.start_x, touch.start_y, Buttons.left_stack) then
             print("Swipe up on left stack")
+            submit_hand(Left_Hand)
         elseif is_point_in_rect(touch.start_x, touch.start_y, Buttons.right_stack) then
             print("Swipe up on right stack")
+            submit_hand(Right_Hand)
         end
         
     -- Check for tap
     elseif distance < Tap_Max_Distance and duration < Tap_Max_Duration then
         if is_point_in_rect(virtual_x, virtual_y, Buttons.left_stack) then
             print("Left draw pile tapped")
-            draw_to_left_hand()
+            draw_to_hand(Left_Hand, Left_Hand_Duplicate_Indices)
         elseif is_point_in_rect(virtual_x, virtual_y, Buttons.right_stack) then
             print("Right draw pile tapped")
-            draw_to_right_hand()
+            draw_to_hand(Right_Hand, Right_Hand_Duplicate_Indices)
         end
     end
 end
