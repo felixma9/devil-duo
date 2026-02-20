@@ -16,6 +16,9 @@ local function init_deck()
     end
 
     -- Add other cards to deck
+    table.insert(Deck, { value = 0 })
+    -- Some cards have special values, these will be special cards
+    table.insert(Deck, { value = -1 })
 
     -- Shuffle deck
     for i = #Deck, 2, -1 do
@@ -111,6 +114,22 @@ function love.load()
     Deck = {}
     init_deck()
 
+    -- Bonus management
+    -- When a bonus card (+2, +4) is drawn, place that bonus in the correct index (1 to NUM_CARDS_IN_STACK)
+    Left_Hand_Bonus_Indices = {}
+    Right_Hand_Bonus_Indices = {}
+
+    for i = 1, NUM_CARDS_IN_STACK do
+        Left_Hand_Bonus_Indices[i] = 0
+        Right_Hand_Bonus_Indices[i] = 0
+    end
+
+    -- { card_value, bonus_value }
+    Bonus_Card_Values = {
+        [-1] = 2,
+        [-2] = 4,
+    }
+
     -- Duplicate management
     -- Length of these is either 0 or 2, 0 == no duplicate, 2 == duplicate
     Left_Hand_Duplicate_Indices = {}
@@ -190,6 +209,11 @@ local function draw_layout_guides()
         )
         love.graphics.setColor(0, 0, 0)
         love.graphics.print(card.value .. " * " .. i, Card_Stack_Left_BL.x + CARD_WIDTH / 3, y_left + CARD_HEIGHT - 20)
+        
+        if Left_Hand_Bonus_Indices[i] > 0 then
+            love.graphics.setColor(1, 0, 0)
+            love.graphics.print("+" .. Left_Hand_Bonus_Indices[i], Card_Stack_Left_BL.x + CARD_WIDTH / 3, y_left + 10)
+        end
     end
 
     -- Draw right hand
@@ -209,6 +233,11 @@ local function draw_layout_guides()
         )
         love.graphics.setColor(0, 0, 0)
         love.graphics.print(card.value .. " * " .. i, Card_Stack_Right_BL.x + CARD_WIDTH / 2, y_left + CARD_HEIGHT - 20)
+
+        if Right_Hand_Bonus_Indices[i] > 0 then
+            love.graphics.setColor(1, 0, 0)
+            love.graphics.print("+" .. Right_Hand_Bonus_Indices[i], Card_Stack_Right_BL.x + CARD_WIDTH / 2, y_left + 10)
+        end
     end
 end
 
@@ -257,6 +286,15 @@ local function clear(hand)
     for k, v in pairs(hand) do hand[k] = nil end
 end
 
+local function handle_bonus_card(hand, card)
+    print("Applying "..Bonus_Card_Values[card.value].." bonus to next card!")
+    if hand == Left_Hand then
+        Left_Hand_Bonus_Indices[#hand + 1] = Bonus_Card_Values[card.value]
+    else
+        Right_Hand_Bonus_Indices[#hand + 1] = Bonus_Card_Values[card.value]
+    end
+end
+
 local function draw_to_hand(hand, duplicate_indices)
     if #duplicate_indices > 0 then
         print("Hand has duplicate! Cards at indices " .. duplicate_indices[1] .. " and " .. duplicate_indices[2] .. " are duplicates. Clearing hand.")
@@ -268,9 +306,20 @@ local function draw_to_hand(hand, duplicate_indices)
     if #hand < NUM_CARDS_IN_STACK then
         -- Draw top card
         local top_card = table.remove(Deck)
-        if top_card then
-            table.insert(hand, top_card)
+
+        if not top_card then
+            print("Deck is empty, cannot draw!")
+            return
         end
+        
+        -- Handle bonus card
+        if top_card.value < 0 then
+            print("Drew bonus card!")
+            handle_bonus_card(hand, top_card)
+            return
+        end
+        
+        table.insert(hand, top_card)
 
         -- Check for duplicates
         for i = 1, #hand - 1 do
@@ -297,9 +346,35 @@ local function submit_hand(hand)
         return
     end
 
+    if #Left_Hand_Duplicate_Indices > 0 then
+        print("Left hand has duplicates! Clearing hand.")
+        clear(hand)
+        clear(Left_Hand_Duplicate_Indices)
+        return
+    elseif #Right_Hand_Duplicate_Indices > 0 then
+        print("Right hand has duplicates! Clearing hand.")
+        clear(hand)
+        clear(Right_Hand_Duplicate_Indices)
+        return
+    end
+
+    -- Calculate score, update globals
     local hand_score = 0
     for i, card in ipairs(hand) do
-        hand_score = hand_score + (card.value * i)
+        local bonus = 0
+
+        if hand == Left_Hand and Left_Hand_Bonus_Indices[i] then
+            bonus = Left_Hand_Bonus_Indices[i]
+        elseif hand == Right_Hand and Right_Hand_Bonus_Indices[i] then
+            bonus = Right_Hand_Bonus_Indices[i]
+        end
+
+        if bonus > 0 then
+            print("Applying bonus of +" .. bonus .. " to card with value " .. card.value)
+        end
+
+        hand_score = hand_score + ((card.value + bonus) * i)
+        bonus = 0
     end
 
     Score = Score + hand_score
