@@ -128,6 +128,7 @@ function love.load()
     Bonus_Card_Values = {
         [-1] = 2,
         [-2] = 4,
+        [-3] = 6,
     }
 
     -- Duplicate management
@@ -244,20 +245,53 @@ end
 local function draw_info_boxes()
     love.graphics.push()
 
-    -- Draw points box
-    local left_box_TL = {
+    local info_box_width = VIRTUAL_WIDTH - (2 * (SCREEN_X_PADDING + INFO_AREA_PADDING))
+    local info_box_height = INFO_HEIGHT - (2 * INFO_AREA_PADDING)
+
+    -- Draw left box (deck info)
+    local info_box_TL = {
         x = SCREEN_X_PADDING + INFO_AREA_PADDING,
         y = SCREEN_Y_PADDING + INFO_AREA_PADDING
     }
     love.graphics.setColor(0.8, 0.8, 0.8)
     love.graphics.rectangle("fill",
-                            SCREEN_X_PADDING + INFO_AREA_PADDING,
-                            SCREEN_Y_PADDING + INFO_AREA_PADDING,
-                            (VIRTUAL_WIDTH / 2) - (SCREEN_X_PADDING + INFO_AREA_PADDING),
+                            info_box_TL.x,
+                            info_box_TL.y,
+                            info_box_width / 3,
+                            info_box_height
+    )
+    love.graphics.setColor(0, 0, 0)
+    love.graphics.print("Deck: " .. #Deck, info_box_TL.x + 10, info_box_TL.y + 10)
+
+    -- Draw middle box (points)
+    local middle_box_TL = {
+        x = info_box_TL.x + (info_box_width / 3),
+        y = info_box_TL.y
+    }
+    love.graphics.setColor(0.8, 0.8, 0.8)
+    love.graphics.rectangle("fill",
+                            middle_box_TL.x,
+                            middle_box_TL.y,
+                            info_box_width / 3,
                             INFO_HEIGHT - (2 * INFO_AREA_PADDING)
     )
     love.graphics.setColor(0, 0, 0)
-    love.graphics.print("Points: " .. Score, left_box_TL.x + 10, left_box_TL.y + 10)
+    love.graphics.print("Points: " .. Score, middle_box_TL.x + 10, middle_box_TL.y + 10)
+
+    -- Draw right box (hands left)
+    local right_box_TL = {
+        x = middle_box_TL.x + (info_box_width / 3),
+        y = info_box_TL.y
+    }
+    love.graphics.setColor(0.8, 0.8, 0.8)
+    love.graphics.rectangle("fill",
+                            right_box_TL.x,
+                            right_box_TL.y,
+                            info_box_width / 3,
+                            INFO_HEIGHT - (2 * INFO_AREA_PADDING)
+    )
+    love.graphics.setColor(0, 0, 0)
+    love.graphics.print("Hands: " .. (NUM_HANDS_SUBMITTABLE - Hands_Submitted), right_box_TL.x + 10, right_box_TL.y + 10)
 
     love.graphics.pop()
 end
