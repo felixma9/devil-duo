@@ -143,6 +143,11 @@ function love.load()
     HOLD_DURATION = 0.5
     TAP_MAX_DISTANCE = 10
     TAP_MAX_DURATION = 0.3
+
+    -- Load graphics
+    love.graphics.setDefaultFilter("nearest", "nearest")
+    Corner_Image = love.graphics.newImage("assets/border_corner.png")
+    BORDER_COLOR = {226/255, 132/255, 19/255}
 end
 
 function love.update(dt)
@@ -296,6 +301,41 @@ local function draw_info_boxes()
     love.graphics.pop()
 end
 
+local function draw_border()
+    local scale = 8
+    local offset = 2 * scale -- how many pixels the border should be outset from edge
+    local tl = {
+        x = SCREEN_X_PADDING,
+        y = SCREEN_Y_PADDING
+    }
+    
+    local width = VIRTUAL_WIDTH - (2 * SCREEN_X_PADDING)
+    local height = VIRTUAL_HEIGHT - (2 * SCREEN_Y_PADDING)
+
+    local x_left = tl.x - offset
+    local x_right = tl.x + width + offset
+    local y_top = tl.y - offset
+    local y_bottom = tl.y + height + offset
+    
+    -- Top-left
+    love.graphics.draw(Corner_Image, x_left, y_top, 0, scale, scale)
+    
+    -- Top-right
+    love.graphics.draw(Corner_Image, x_right, y_top, 0, -scale, scale)
+    
+    -- Bottom-left
+    love.graphics.draw(Corner_Image, x_left, y_bottom, 0, scale, -scale)
+
+    -- Bottom-right
+    love.graphics.draw(Corner_Image, x_right, y_bottom, 0, -scale, -scale)
+
+    -- Border
+    love.graphics.setLineWidth(scale)
+    love.graphics.setColor(BORDER_COLOR)
+    love.graphics.rectangle("line", tl.x - (scale / 2), tl.y - (scale / 2), width + scale, height + scale)
+    love.graphics.setLineWidth(1)
+end
+
 function love.draw()
     -- Apply scaling transformation
     love.graphics.push()
@@ -306,14 +346,17 @@ function love.draw()
     love.graphics.clear(0.1, 0.2, 0.3)          -- fill screen with color
     love.graphics.setColor(1, 1, 1)
 
-    -- Stop scaling
-    love.graphics.pop()
+    -- Draw border
+    draw_border()
 
     -- Draw zones on screen
     draw_layout_guides()
 
     -- Draw info boxes
     draw_info_boxes()
+
+    -- Stop scaling
+    love.graphics.pop()
 end
 
 local function clear(hand)
