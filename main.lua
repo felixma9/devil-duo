@@ -384,7 +384,11 @@ local function draw_to_hand(hand, duplicate_indices)
         return
     end
 
-    if #hand < NUM_CARDS_IN_STACK then
+    if #hand >= NUM_CARDS_IN_STACK then
+        print("Reached max hand size!")
+        return
+
+    elseif #hand < NUM_CARDS_IN_STACK then
         -- Draw top card
         local top_card = table.remove(Deck)
 
@@ -410,9 +414,6 @@ local function draw_to_hand(hand, duplicate_indices)
                 break
             end
         end
-    else
-        print("Hand is full!")
-        clear(hand)
     end
 end
 
@@ -531,6 +532,9 @@ function love.touchreleased(id, x, y)
     end
 end
 
+-- Proxies for tapping the screen with a mouse, for testing on non-touch devices
+-- On a laptop with touch detection, these can trigger along with touchpressed and touchreleased
+-- resulting in double taps
 function love.mousepressed(x, y, button)
     if button == 1 then
         love.touchpressed("mouse", x, y)
