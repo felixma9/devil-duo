@@ -144,6 +144,10 @@ function love.load()
     TAP_MAX_DISTANCE = 10
     TAP_MAX_DURATION = 0.3
 
+    -- Load font
+    local pixel_font = love.graphics.newFont("Pix32.ttf", 16)
+    love.graphics.setFont(pixel_font)
+
     -- Load graphics
     love.graphics.setDefaultFilter("nearest", "nearest")
     Corner_Image = love.graphics.newImage("assets/border_corner.png")
@@ -266,7 +270,7 @@ local function draw_info_boxes()
                             info_box_height
     )
     love.graphics.setColor(0, 0, 0)
-    love.graphics.print("Deck: " .. #Deck, info_box_TL.x + 10, info_box_TL.y + 10)
+    love.graphics.print("Deck: \n" .. #Deck, info_box_TL.x + 10, info_box_TL.y + 10)
 
     -- Draw middle box (points)
     local middle_box_TL = {
@@ -281,7 +285,7 @@ local function draw_info_boxes()
                             INFO_HEIGHT - (2 * INFO_AREA_PADDING)
     )
     love.graphics.setColor(0, 0, 0)
-    love.graphics.print("Points: " .. Score, middle_box_TL.x + 10, middle_box_TL.y + 10)
+    love.graphics.print("Points: \n" .. Score, middle_box_TL.x + 10, middle_box_TL.y + 10)
 
     -- Draw right box (hands left)
     local right_box_TL = {
@@ -296,7 +300,7 @@ local function draw_info_boxes()
                             INFO_HEIGHT - (2 * INFO_AREA_PADDING)
     )
     love.graphics.setColor(0, 0, 0)
-    love.graphics.print("Hands: " .. (NUM_HANDS_SUBMITTABLE - Hands_Submitted), right_box_TL.x + 10, right_box_TL.y + 10)
+    love.graphics.print("Hands: \n" .. (NUM_HANDS_SUBMITTABLE - Hands_Submitted), right_box_TL.x + 10, right_box_TL.y + 10)
 
     love.graphics.pop()
 end
